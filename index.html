@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>chatbot</title>
+    <link href="css/global.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="chat-bg">
+<header class="header-title">ChatBot</header>
+<section class="chat-box">
+    <span class="chat-trip"></span>
+    <div class="bubbleDiv"></div>
+</section>
+<footer class="chat-edit clearfix">
+    <input class="chat-info"></input>
+    <button class="send-btn fr">send</button>
+</footer>
+
+<script src="js/jquery-1.8.3.min.js"></script>
+<script src="js/chat.js"></script>
+<script type="text/javascript" src="lib/axios/dist/axios.standalone.js"></script>
+<script type="text/javascript" src="lib/CryptoJS/rollups/hmac-sha256.js"></script>
+<script type="text/javascript" src="lib/CryptoJS/rollups/sha256.js"></script>
+<script type="text/javascript" src="lib/CryptoJS/components/hmac.js"></script>
+<script type="text/javascript" src="lib/CryptoJS/components/enc-base64.js"></script>
+<script type="text/javascript" src="lib/url-template/url-template.js"></script>
+<script type="text/javascript" src="lib/apiGatewayCore/sigV4Client.js"></script>
+<script type="text/javascript" src="lib/apiGatewayCore/apiGatewayClient.js"></script>
+<script type="text/javascript" src="lib/apiGatewayCore/simpleHttpClient.js"></script>
+<script type="text/javascript" src="lib/apiGatewayCore/utils.js"></script>
+<script type="text/javascript" src="lib/aws-sdk.js"></script>
+<script type="text/javascript" src="apigClient.js"></script>
+
+<script>
+
+    function getUrlVars() {
+        var vars = {};
+        var parts = window.location.href.replace(/[#?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+            vars[key] = value;
+        });
+        return vars;
+    }
+
+    var apigClient;
+    AWS.config.region = 'us-east-1'; // Region
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: 'us-east-1:d1e9f621-a613-4881-8317-ba17cd39d92c',
+        Login: {
+            'cognito-idp.us-east-1.amazonaws.com/us-east-1_xFmePyQ0O': getUrlVars()["id_token"]
+        }
+    });
+    AWS.config.credentials.refresh(function(){
+        AWS.config.region = 'us-east-1'; // Region
+        var accessKeyId = AWS.config.credentials.accessKeyId;
+        var secretAccessKey = AWS.config.credentials.secretAccessKey;
+        var sessionToken = AWS.config.credentials.sessionToken;
+        apigClient = apigClientFactory.newClient({
+            accessKey: accessKeyId,
+            secretKey: secretAccessKey,
+            sessionToken: sessionToken,
+            region: 'us-east-1'
+        });
+    });
+
+    function getResponseFromBot() {
+        chat("rightBubble");
+        var body = {"messages": [
+                {
+                    "type": "0",
+                    "unstructured":{
+                        "id": "123",
+                        "text": $('.chat-info').val(),
+                        "timestamp": "2019-03-08",
+                    }
+                }
+            ]
+        };
+        $('.chat-info').val('');
+        var params = {};
+        var additionalParmas = {};
+        apigClient.chatbotPost(params, body, additionalParmas)
+        .then(function(result){
+            chat("leftBubble","images/head_portrait.png", result["data"]["body"]);
+            $('.chat-info').focus();
+        }).catch( function(result){
+            console.log("error");
+        });
+    }
+
+    $(".send-btn").click(function(){
+        getResponseFromBot()
+    });
+
+    $('.chat-info').on('keypress', function (e) {
+         if(e.which === 13){
+
+            //Disable textbox to prevent multiple submit
+            $(this).attr("disabled", "disabled");
+
+            //Do Stuff, submit, etc..
+            getResponseFromBot()
+            //Enable the textbox again if needed.
+            $(this).removeAttr("disabled");
+         }
+    });
+
+</script>
+</body>
+</html>
