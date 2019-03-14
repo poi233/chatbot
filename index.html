@@ -44,23 +44,26 @@
     }
 
     var apigClient;
-    AWS.config.region = 'us-east-1'; // Region
-    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-        IdentityPoolId: 'us-east-1:d1e9f621-a613-4881-8317-ba17cd39d92c',
-        Login: {
-            'cognito-idp.us-east-1.amazonaws.com/us-east-1_xFmePyQ0O': getUrlVars()["id_token"]
-        }
-    });
-    AWS.config.credentials.refresh(function(){
+
+    $( document ).ready(function() {
         AWS.config.region = 'us-east-1'; // Region
-        var accessKeyId = AWS.config.credentials.accessKeyId;
-        var secretAccessKey = AWS.config.credentials.secretAccessKey;
-        var sessionToken = AWS.config.credentials.sessionToken;
-        apigClient = apigClientFactory.newClient({
-            accessKey: accessKeyId,
-            secretKey: secretAccessKey,
-            sessionToken: sessionToken,
-            region: 'us-east-1'
+        var id_token = getUrlVars()["id_token"]
+        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                IdentityPoolId: 'us-east-1:d1e9f621-a613-4881-8317-ba17cd39d92c',
+                Logins : {
+                    'cognito-idp.us-east-1.amazonaws.com/us-east-1_xFmePyQ0O': id_token
+                }
+            });
+        AWS.config.credentials.refresh(function(){
+            var accessKeyId = AWS.config.credentials.accessKeyId;
+            var secretAccessKey = AWS.config.credentials.secretAccessKey;
+            var sessionToken = AWS.config.credentials.sessionToken;
+            apigClient = apigClientFactory.newClient({
+                accessKey: accessKeyId,
+                secretKey: secretAccessKey,
+                sessionToken: sessionToken,
+                region: 'us-east-1'
+            });
         });
     });
 
@@ -85,7 +88,8 @@
             chat("leftBubble","images/head_portrait.png", result["data"]["body"]);
             $('.chat-info').focus();
         }).catch( function(result){
-            console.log("error");
+            chat("leftBubble","images/head_portrait.png", "You should login first! Please visit https://chatbot-yihao.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=70qbkt77sqf89d2tqs25q7hecl&redirect_uri=https://s3.amazonaws.com/chatbot-yihao-yinyin/index.html");
+            $('.chat-info').focus();
         });
     }
 
@@ -105,6 +109,7 @@
             $(this).removeAttr("disabled");
          }
     });
+
 
 </script>
 </body>
